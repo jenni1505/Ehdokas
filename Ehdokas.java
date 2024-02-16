@@ -1,10 +1,3 @@
-//Tee luokka Ehdokas ja 
-//lisää siihen jäsenmuuttujiksi sukunimi, etunimi, äänimäärä ja vertailuluku. 
-//Tee konstruktori valmiiksi. 
-//Lisää metodi toString, 
-//joka palauttaa yhtenä merkkijonona kaikki olion tiedot. 
-//Vertailuluku on aluksi nolla. 
-
 class Ehdokas {
     private String sukunimi;
     private String nimi;
