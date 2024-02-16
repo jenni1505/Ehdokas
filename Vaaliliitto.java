@@ -23,7 +23,7 @@ class Vaaliliitto {
     }
 
     public void laskeVertailuluvutDHondt() {
-        double aanienYhteismaara = aanienYhteismaara(); // Laskee vaaliliiton äänien yhteismäärän
+        double aanienYhteismaara = aanienYhteismaara(); // hakee vaaliliiton äänien yhteismäärän
     
         // Ehdokkaat järjestetään äänimäärän mukaan laskevasti ensin.
         Collections.sort(ehdokkaat, Comparator.comparing(Ehdokas::getAanimaara).reversed());
