@@ -1,0 +1,187 @@
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+public class EhdokasSorter {
+    public static void main(String[] args) {
+        Map<String, Vaaliliitto> vaaliliitot = new HashMap<>();
+        ArrayList<Ehdokas> ehdokkaat = new ArrayList<>();
+        
+        
+        try {
+            Scanner fileScanner = new Scanner(new File("Kuntavaalit2021OM.csv"));
+            while (fileScanner.hasNextLine()) {
+                String line = fileScanner.nextLine();
+                //  ';' tai ',' vaihtoehtona, kun jaetaan tiedostoa, jossa kaksi vaihtoehtoa tietojen erotteluun
+                String[] parts = line.split("[;,]"); // CSV-tiedostolle
+
+                // String[] parts = line.split(",");  line.split("\\s+");
+
+                if (parts.length == 4) {
+                    try {
+                        String nimi = parts[1];
+                        String sukunimi = parts[0];
+                        String puolue = parts[2];
+                        double aanimaara = Double.parseDouble(parts[3]); // Muunna String double-tyyppiseksi
+
+                        // Luodaan uusi ehdokas-olio
+                        Ehdokas ehdokas = new Ehdokas(sukunimi, nimi, puolue, aanimaara);
+
+                        ehdokkaat.add(ehdokas);
+
+                        // Tarkista, onko vaaliliitto jo olemassa Map:ssa, ja lisää ehdokas
+                        Vaaliliitto vaaliliitto = vaaliliitot.getOrDefault(puolue, new Vaaliliitto(puolue));
+                        vaaliliitto.lisaaEhdokas(ehdokas);
+
+                        // Päivitä vaaliliitto Map-rakenteeseen
+                        vaaliliitot.put(puolue, vaaliliitto);
+                         
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("Virheellinen numeerinen arvo rivillä: " + line);
+                    }
+                } else {
+                    System.out.println("Rivillä väärä määrä tietoja: " + line);
+                }
+            }
+
+            fileScanner.close();
+
+        } catch (FileNotFoundException e) {
+            System.out.println("Tiedostoa ei löytynyt: " + e.getMessage());
+            return;
+        }
+        // Kuntavaalit2021OM.csv tiedoston mukainen järjestys
+        
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Valitse toiminto:");
+        System.out.println("1: Järjestä ehdokkaat puolueen ja nimen mukaan");
+        System.out.println("2: Järjestä ehdokkaat puolueen ja äänimäärän mukaan");
+        System.out.println("3: Näytä kunkin puolueen ehdokasmäärä");
+        System.out.println("4: Näytä jokaisen puolueen suurin yksittäinen äänimäärä");
+        System.out.println("5: Näytä 51 läpi päässyttä ehdokasta");
+
+        // valittuPuolue-muuttujan alustus tässä
+        final String valittuPuolue;
+        int valinta = Integer.parseInt(scanner.nextLine());
+        List<Ehdokas> suodatetutEhdokkaat = new ArrayList<>();
+        //List<Ehdokas> kaikkiEhdokkaat = new ArrayList<>();
+        
+        switch (valinta) {
+            case 1:
+                // ehdokkaiden järjestäminen puolueen ja sukunimen mukaan
+                System.out.println("Anna puolueen nimi:");
+                valittuPuolue = scanner.nextLine(); // Arvo valittuPuolue
+
+                // suodatetut ehdokkaat sorttaus puolueen mukaan ja sukunimen mukaan
+                suodatetutEhdokkaat = ehdokkaat.stream()
+                        .filter(e -> e.getPuolue().equalsIgnoreCase(valittuPuolue))
+                        .sorted(Comparator.comparing(Ehdokas::getSukunimi))
+                        .collect(Collectors.toList());
+
+                // Tulosta puolueen ehdokkaat sukunimen mukaisessa aakkosjärjestyksessä 
+                System.out.println("Puolueen " + valittuPuolue + " ehdokkaat aakkosjärjestyksessä sukunimen mukaan:");
+                suodatetutEhdokkaat.forEach(e -> System.out
+                        .println(e.getSukunimi() + " " + e.getNimi() + ": " + e.getAanimaara() + " ääntä"));
+
+                break;
+
+            case 2:
+
+                // Ehdokkaiden järjestäminen äänimäärän mukaan
+                System.out.println("Anna puolueen nimi:");
+                scanner.nextLine();
+                valittuPuolue = scanner.nextLine(); 
+
+                System.out.println("Haluatko nähdä eniten (E) vai vähiten (V) ääniä saaneet ehdokkaat?");
+                String aanestyksenValinta = scanner.nextLine();
+
+                // suodatetut ehdokkaat sorttaus puolueen mukaan
+                suodatetutEhdokkaat = ehdokkaat.stream()
+                        .filter(e -> e.getPuolue().equalsIgnoreCase(valittuPuolue))
+                        .collect(Collectors.toList());
+
+                if (aanestyksenValinta.equalsIgnoreCase("E")) {
+                    suodatetutEhdokkaat.stream()
+                            .sorted(Comparator.comparingDouble(Ehdokas::getAanimaara).reversed())
+                            .limit(10)
+                            .forEach(e -> System.out
+                                    .println(e.getNimi() + " " + e.getSukunimi() + ": " + e.getAanimaara() + " ääntä"));
+                } else if (aanestyksenValinta.equalsIgnoreCase("V")) {
+                    suodatetutEhdokkaat.stream()
+                            .sorted(Comparator.comparingDouble(Ehdokas::getAanimaara))
+                            .limit(5)
+                            .forEach(e -> System.out
+                                    .println(e.getNimi() + " " + e.getSukunimi() + ": " + e.getAanimaara() + " ääntä"));
+                } else {
+                    System.out.println("Virheellinen valinta");
+                }
+
+                break;
+
+            case 3:// Käyttäjä haluaa tietää montako ehdokasta/puolue
+                // Laske ja tulosta kunkin puolueen ehdokasmäärä
+                Map<String, Long> ehdokasMaarat = ehdokkaat.stream()
+                        .collect(Collectors.groupingBy(Ehdokas::getPuolue, Collectors.counting()));
+                ehdokasMaarat.forEach((puolue, maara) -> System.out.println(puolue + ": " + maara + " ehdokasta"));
+                break;
+            
+            case 4:
+                // Etsii kaikkien puolueiden suurimmat äänimäärät
+                Map<String, Double> suurimmatAanimaarat = new HashMap<>();
+
+                for (Ehdokas ehdokas : ehdokkaat) {
+                    String puolue = ehdokas.getPuolue();
+                    double aanimaara = ehdokas.getAanimaara();
+
+                    // Tarkista onko tällä puolueella jo suurempi äänimäärä tallennettuna
+                    if (!suurimmatAanimaarat.containsKey(puolue) || aanimaara > suurimmatAanimaarat.get(puolue)) {
+                        suurimmatAanimaarat.put(puolue, aanimaara); 
+                    }
+                }
+
+                // Tulosta suurin äänimäärät kullekin puolueelle
+                System.out.println("Kaikkien puolueiden suurin äänimäärä:");
+                suurimmatAanimaarat
+                        .forEach((puolue, aanimaara) -> System.out.println(puolue + ": " + aanimaara + " ääntä"));
+                break;
+
+                case 5:
+                // Lisätään kaikki ehdokkaat yhteen listaan vaaliliitoista
+                List<Ehdokas> kaikkiEhdokkaat = new ArrayList<>();
+                for (Vaaliliitto vaaliliitto : vaaliliitot.values()) {
+                    vaaliliitto.laskeVertailuluvutDHondt(); 
+                    kaikkiEhdokkaat.addAll(vaaliliitto.getEhdokkaat());
+                }
+            
+                // Järjestä kaikki ehdokkaat vertailulukujen mukaan laskevassa järjestyksessä
+                Collections.sort(kaikkiEhdokkaat, Comparator.comparingDouble(Ehdokas::getVertailuluku).reversed());
+            
+                // Valitse 51 ehdokasta, joilla on korkein vertailuluku
+                List<Ehdokas> valitutEhdokkaat = kaikkiEhdokkaat.stream()
+                                                                .sorted(Comparator.comparingDouble(Ehdokas::getVertailuluku).reversed())
+                                                                .limit(51)
+                                                                .collect(Collectors.toList());
+
+        
+                //Tulosta valitut ehdokkaat, vertailuluku 1:n desimaalin tarkkuudella
+                System.out.println("51 valtuustoon valittua ehdokasta:");
+                for (Ehdokas ehdokas : valitutEhdokkaat) {
+                  System.out.println(ehdokas.getNimi() + " " + ehdokas.getSukunimi() + ", " + ehdokas.getPuolue()
+                            + ", Ääniä: " + ehdokas.getAanimaara() + ", Vertailuluku: " + String.format("%.1f", ehdokas.getVertailuluku()));
+                }
+        
+                break;    
+            }
+
+            scanner.close();
+        }
+    }
