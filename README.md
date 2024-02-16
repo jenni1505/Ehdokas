@@ -1,5 +1,6 @@
 Projekti sisältää kolme Java-tiedostoa, 
-jotka on suunniteltu käsittelemään ehdokkaiden tietoja, ja
+jotka on suunniteltu käsittelemään ehdokkaiden tietoja 
+neljännestä CSV-tiedostosta, ja
 ryhmittelemään ne käyttäjän 5 erilaisen toiveen mukaisesti.
 Ryhmittelyssä käytettään mm. vaaliliittoa, jossa puolueen ehdokkaiden äänimäärät summataan
 ja lasketaan D'Hondtin menetelmällä, ketkä ehdokkaat valitaan vaaleissa. 
